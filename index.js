@@ -39,13 +39,17 @@ app.post('/submit-consultation', express.json(), async (req, res) => {
     return res.status(400).json({ status: 'error', message: '必要欄位未填寫完整！' });
   }
 
+  const host = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+
   // 1. Send Email notification to marincop@gmail.com using FormSubmit AJAX API
   try {
     const emailRes = await fetch('https://formsubmit.co/ajax/marincop@gmail.com', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Referer': host,
+        'Origin': host
       },
       body: JSON.stringify({
         name,
