@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const line = require('@line/bot-sdk');
+const path = require('path');
+
 
 const config = {
   channelSecret: process.env.LINE_CHANNEL_SECRET || '',
@@ -23,6 +25,66 @@ app.get('/', (req, res) => {
 app.get('/callback', (req, res) => {
   res.send('LINE Bot Webhook Server is active! (Note: LINE Webhook uses HTTP POST, not HTTP GET)');
 });
+
+// Serve the consultation booking form page
+app.get('/consultation', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'consultation.html'));
+});
+
+// Handle consultation form submission
+app.post('/submit-consultation', express.json(), async (req, res) => {
+  const { name, company, phone, email, services, notes } = req.body;
+
+  if (!name || !phone || !email || !services) {
+    return res.status(400).json({ status: 'error', message: '必要欄位未填寫完整！' });
+  }
+
+  // 1. Send Email notification to marincop@gmail.com using FormSubmit AJAX API
+  try {
+    const emailRes = await fetch('https://formsubmit.co/ajax/marincop@gmail.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        company: company || '無',
+        phone,
+        email,
+        services,
+        notes: notes || '無',
+        _subject: `📩 新預約諮詢申請: ${name} (${company || '個人'})`
+      })
+    });
+    const emailData = await emailRes.json();
+    console.log('FormSubmit Email response:', emailData);
+  } catch (err) {
+    console.error('Failed to send Email notification via FormSubmit:', err);
+  }
+
+  // 2. Send LINE push notification to admin
+  const adminId = process.env.ADMIN_LINE_USER_ID;
+  if (adminId) {
+    try {
+      await client.pushMessage({
+        to: adminId,
+        messages: [
+          {
+            type: 'text',
+            text: `📩 【收到新預約諮詢通知】\n\n👤 聯絡人: ${name}\n🏢 公司: ${company || '無'}\n📞 電話: ${phone}\n✉️ Email: ${email}\n🛠️ 諮詢項目: ${services}\n📝 需求說明:\n${notes || '無'}`
+          }
+        ]
+      });
+      console.log('LINE push notification sent to admin successfully.');
+    } catch (err) {
+      console.error('Failed to send LINE push notification to admin:', err);
+    }
+  }
+
+  return res.json({ status: 'success', message: '預約已送出！' });
+});
+
 
 // Webhook callback endpoint
 app.post('/callback', line.middleware(config), (req, res) => {
@@ -107,12 +169,69 @@ async function handleEvent(event, host) {
       replyToken: event.replyToken,
       messages: [
         {
-          type: 'text',
-          text: '📩【專人諮詢專區】\n\n已通知專案負責人！為了能更高效處理您的問題，請在下方訊息框直接留下：\n\n1. 您的姓名 / 公司名稱：\n2. 方便聯絡的電話：\n3. 簡述您的需求（例如：想做採買系統、需要 OpenClaw 部署等）：\n\n專案負責人將會儘速回覆您，感謝您的耐心等待！'
+          type: 'flex',
+          altText: '預約專人技術諮詢',
+          contents: {
+            type: 'bubble',
+            hero: {
+              type: 'image',
+              url: `${host}/media/consulting_logo_1785840239971.jpg`,
+              size: 'full',
+              aspectRatio: '1.51:1',
+              aspectMode: 'cover'
+            },
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: '💼 專屬技術諮詢預約',
+                  weight: 'bold',
+                  size: 'lg',
+                  color: '#1e3a8a'
+                },
+                {
+                  type: 'text',
+                  text: '一對一規劃您的數位轉型藍圖',
+                  weight: 'bold',
+                  size: 'sm',
+                  color: '#6b7280',
+                  margin: 'xs'
+                },
+                {
+                  type: 'text',
+                  text: '為能提供您最專業的評估，請點擊下方按鈕填寫簡要的需求表單。我們將安排專案負責人在第一時間為您進行評估與回覆。',
+                  size: 'sm',
+                  color: '#4b5563',
+                  margin: 'md',
+                  wrap: true
+                }
+              ]
+            },
+            footer: {
+              type: 'box',
+              layout: 'vertical',
+              spacing: 'sm',
+              contents: [
+                {
+                  type: 'button',
+                  style: 'primary',
+                  color: '#1e3a8a',
+                  action: {
+                    type: 'uri',
+                    label: '📋 填寫預約表單',
+                    uri: `${host}/consultation`
+                  }
+                }
+              ]
+            }
+          }
         }
       ]
     });
   }
+
 
   // 5. 最新貼文 (小龍蝦股票分析師)
   if (userMessage === '最新貼文' || userMessage.includes('貼文') || userMessage.includes('小龍蝦') || userMessage.includes('分析師')) {

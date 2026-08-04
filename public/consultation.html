@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>預約專人諮詢 | 數位轉型技術顧問</title>
+  <!-- Import Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(17, 25, 40, 0.65);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient glowing background blobs */
+    body::before, body::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: -1;
+      opacity: 0.4;
+    }
+    body::before {
+      background: #3b82f6;
+      top: -100px;
+      left: -100px;
+    }
+    body::after {
+      background: #8b5cf6;
+      bottom: -100px;
+      right: -100px;
+    }
+
+    .form-container {
+      width: 100%;
+      max-width: 580px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #e5e7eb;
+      margin-bottom: 0.5rem;
+    }
+
+    .input-control {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      color: var(--text-main);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .input-control:focus {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: #60a5fa;
+      box-shadow: 0 0 12px rgba(96, 165, 250, 0.3);
+    }
+
+    /* Consultation items checkboxes */
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    @media (min-width: 480px) {
+      .checkbox-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .checkbox-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .checkbox-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(96, 165, 250, 0.4);
+    }
+
+    .checkbox-card input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--text-muted);
+      border-radius: 4px;
+      outline: none;
+      margin-right: 0.8rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .checkbox-card input[type="checkbox"]:checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .checkbox-card input[type="checkbox"]:checked::after {
+      content: '✓';
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .checkbox-card span {
+      font-size: 0.9rem;
+      color: #e5e7eb;
+      user-select: none;
+    }
+
+    .checkbox-card input[type="checkbox"]:checked + span {
+      color: #60a5fa;
+      font-weight: 500;
+    }
+
+    textarea.input-control {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--primary-gradient);
+      border: none;
+      border-radius: 12px;
+      padding: 1rem;
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+      opacity: 0.95;
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      background: #4b5563;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      opacity: 0.6;
+    }
+
+    /* Success overlay card */
+    .success-overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes zoomIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid #10b981;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #10b981;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .success-overlay h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      color: #10b981;
+    }
+
+    .success-overlay p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <!-- Form Content -->
+    <form id="consultationForm" onsubmit="handleSubmit(event)">
+      <div class="header">
+        <h1>專人技術諮詢</h1>
+        <p>為您量身打造數位化解決方案。請填寫您的基本聯絡需求，我們將指派專案負責人主動與您聯絡！</p>
+      </div>
+
+      <div class="form-group">
+        <label for="name">您的姓名 / 聯絡人 *</label>
+        <input type="text" id="name" name="name" class="input-control" placeholder="例如：張經理" required>
+      </div>
+
+      <div class="form-group">
+        <label for="company">公司名稱 / 單位</label>
+        <input type="text" id="company" name="company" class="input-control" placeholder="例如：科技股份有限公司">
+      </div>
+
+      <div class="form-group">
+        <label for="phone">方便聯絡的電話 *</label>
+        <input type="tel" id="phone" name="phone" class="input-control" placeholder="例如：0912-345678" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">電子郵件 Email *</label>
+        <input type="email" id="email" name="email" class="input-control" placeholder="例如：name@company.com" required>
+      </div>
+
+      <div class="form-group">
+        <label>想諮詢的項目 (可多選) *</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-card">
+            <input type="checkbox" name="services" value="AI 智能整合 (OpenClaw / RAG)">
+            <span>AI 智能整合 (OpenClaw / RAG)</span>
+          </label>
+          <label class="checkbox-card">
+            <input type="checkbox" name="services" value="客製化營運系統 (打卡 / 進銷存)">
+            <span>客製化營運系統 (打卡 / 進銷存)</span>
+          </label>
+          <label class="checkbox-card">
+            <input type="checkbox" name="services" value="智慧門市與物聯網 (POS / RFID)">
+            <span>智慧門市與物聯網 (POS / RFID)</span>
+          </label>
+          <label class="checkbox-card">
+            <input type="checkbox" name="services" value="雲端建置與系統部署諮詢">
+            <span>雲端與系統部署諮詢</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">簡述您的需求 / 其他說明</label>
+        <textarea id="notes" name="notes" class="input-control" placeholder="請在此簡述您的需求，如想做的系統細節、OpenClaw 部署場景等..."></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn" class="submit-btn">送出預約申請</button>
+    </form>
+
+    <!-- Success View -->
+    <div id="successView" class="success-overlay">
+      <div class="success-icon">✓</div>
+      <h2>預約諮詢已完成！</h2>
+      <p>已成功將您的預約需求通知專案負責人！<br>我們將儘速回覆您，感謝您的耐心等待。</p>
+    </div>
+  </div>
+
+  <script>
+    async function handleSubmit(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = '正在送出申請...';
+
+      // Gather form data
+      const name = document.getElementById('name').value;
+      const company = document.getElementById('company').value;
+      const phone = document.getElementById('phone').value;
+      const email = document.getElementById('email').value;
+      const notes = document.getElementById('notes').value;
+
+      // Extract checked checkboxes
+      const checkedServices = [];
+      document.querySelectorAll('input[name="services"]:checked').forEach((checkbox) => {
+        checkedServices.push(checkbox.value);
+      });
+
+      if (checkedServices.length === 0) {
+        alert('請至少勾選一項想諮詢的項目！');
+        submitBtn.disabled = false;
+        submitBtn.innerText = '送出預約申請';
+        return;
+      }
+
+      const payload = {
+        name,
+        company,
+        phone,
+        email,
+        services: checkedServices.join(', '),
+        notes
+      };
+
+      try {
+        const response = await fetch('/submit-consultation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          // Hide form, show success message
+          document.getElementById('consultationForm').style.display = 'none';
+          document.getElementById('successView').style.display = 'flex';
+        } else {
+          const errData = await response.json();
+          alert('送出失敗：' + (errData.message || '伺服器錯誤'));
+          submitBtn.disabled = false;
+          submitBtn.innerText = '送出預約申請';
+        }
+      } catch (err) {
+        console.error(err);
+        alert('網路連線異常，請稍後再試！');
+        submitBtn.disabled = false;
+        submitBtn.innerText = '送出預約申請';
+      }
+    }
+  </script>
+</body>
+</html>
