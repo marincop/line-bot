@@ -456,16 +456,96 @@ async function handleEvent(event, host) {
     });
   }
 
-  // 預設回覆
-  return client.replyMessage({
-    replyToken: event.replyToken,
-    messages: [
-      {
-        type: 'text',
-        text: `收到您的訊息: "${userMessage}"\n\n💡 請直接點擊底部的圖文選單按鈕，或輸入「AI」、「系統」、「POS」或「預約諮詢」來取得更多資訊！`
-      }
-    ]
-  });
+  // 預設使用 Gemini AI 大腦進行人性化回覆
+  try {
+    const aiResponse = await askGemini(userMessage);
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [
+        {
+          type: 'text',
+          text: aiResponse
+        }
+      ]
+    });
+  } catch (err) {
+    console.error('Failed to generate Gemini response:', err);
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [
+        {
+          type: 'text',
+          text: `已收到您的訊息："${userMessage}"。我們將盡快指派專人與您聯繫！`
+        }
+      ]
+    });
+  }
+}
+
+// Ask Gemini API helper
+async function askGemini(userPrompt) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error('GEMINI_API_KEY is not defined.');
+    return '抱歉，我的 AI 大腦暫時無法連線。請聯絡管理員確認 API Key 設定！';
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+  const systemInstruction = `你是一位親切、專業且溫暖的 AI 助理，代表「數位轉型與 AI 技術顧問」公司（簡稱顧問特助）。
+你必須使用台灣繁體中文對話，協助解答顧客關於軟體開發、AI 導入、RFID/POS 系統等技術與商務問題。
+你的終極目標是：引導有高度意願的顧客在對話中打字輸入「預約諮詢」，或引導他們前往預約表單。
+
+服務資訊參考：
+- AI 智能整合：自主代理（OpenClaw 框架）、企業私有知識庫（RAG）。
+- 客製軟體開發：打卡考勤系統、進銷存管理系統、雲端資料庫建置。
+- 物聯網智慧門市：RFID 快速倉儲盤點、客製化 POS 機整合。
+- 限時特惠：小龍蝦 AI 股票分析師安裝服務，特價 2499 元（原價 4990，送三個月保固，不含硬體）。曾有客戶在兩天內透過 OpenClaw 獲利 50,000 美金。
+
+對話規則：
+- 態度誠懇、口吻人性化，避免機械式的條列回覆。
+- 絕不提及您是 Google 研發的大型語言模型，您就是這家顧問公司的專業助理。
+- 適時在回覆中加入表情符號使對話活潑。`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: userPrompt }
+            ]
+          }
+        ],
+        systemInstruction: {
+          parts: [
+            { text: systemInstruction }
+          ]
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Gemini API Error Response:', errText);
+      return '您的訊息已收到！目前諮詢人數較多，我將把您的問題轉交給專案經理，稍後會主動聯絡您！';
+    }
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    return '您的訊息已收到！目前諮詢人數較多，我將把您的問題轉交給專案經理，稍後會主動聯絡您！';
+  } catch (err) {
+    console.error('Error calling Gemini API:', err);
+    return '您的訊息已收到！目前諮詢人數較多，我將把您的問題轉交給專案經理，稍後會主動聯絡您！';
+  }
 }
 
 const port = process.env.PORT || 3000;
