@@ -89,7 +89,7 @@ app.post('/submit-consultation', express.json(), async (req, res) => {
 // Webhook callback endpoint
 app.post('/callback', line.middleware(config), (req, res) => {
   // Extract external host (e.g. serveo URL), fall back to request header if not set
-  const host = process.env.COOLIFY_URL || `${req.protocol}://${req.get('host')}`;
+  const host = process.env.APP_URL || process.env.COOLIFY_URL || `${req.protocol}://${req.get('host')}`;
   Promise
     .all(req.body.events.map(event => handleEvent(event, host)))
     .then((result) => res.json(result))
